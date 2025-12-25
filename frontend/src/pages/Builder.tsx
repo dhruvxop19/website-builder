@@ -12,6 +12,7 @@ import { parseXml } from '../steps';
 import { useWebContainer } from '../hooks/useWebContainer';
 import { FileNode } from '@webcontainer/api';
 import { Loader } from '../components/Loader';
+import { Rocket, Sparkles, Send, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 
 const MOCK_FILE_CONTENT = `// This is a sample file content
 import React from 'react';
@@ -238,134 +239,208 @@ export function Builder() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col">
-      <header className="bg-gray-800 border-b border-gray-700 px-6 py-4">
-        <h1 className="text-xl font-semibold text-gray-100">Website Builder</h1>
-        <p className="text-sm text-gray-400 mt-1">Prompt: {prompt}</p>
-        {webContainerLoading && (
-          <p className="text-sm text-yellow-400 mt-1">🔄 WebContainer loading...</p>
-        )}
-        {webContainerError && (
-          <p className="text-sm text-red-400 mt-1">❌ WebContainer error: {webContainerError}</p>
-        )}
-        {webcontainer && !webContainerLoading && (
-          <p className="text-sm text-green-400 mt-1">✅ WebContainer ready ({files.length} files)</p>
-        )}
-        {rateLimitInfo?.isLimited && (
-          <div className="bg-red-900/50 border border-red-500 rounded-md p-3 mt-2">
-            <p className="text-sm text-red-400 font-medium">
-              ⏳ API Rate Limit Reached
-            </p>
-            <p className="text-xs text-red-300 mt-1">
-              The free tier allows 20 requests per day. Please wait {countdown} seconds before trying again.
-            </p>
+    <div className="min-h-screen bg-[#050505] text-white selection:bg-white/20 flex flex-col">
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[20%] left-[50%] -translate-x-1/2 w-[800px] h-[400px] bg-white/5 blur-[120px] rounded-full opacity-50" />
+      </div>
+
+      <header className="relative z-10 border-b border-white/[0.08] bg-black/20 backdrop-blur-md">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded bg-white flex items-center justify-center">
+                <Rocket className="w-4 h-4 text-black" strokeWidth={3} />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold tracking-tight">Website Builder</h1>
+                <p className="text-xs text-zinc-500 mt-0.5 flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3" />
+                  {prompt}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              {webContainerLoading && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                  <Clock className="w-3.5 h-3.5 text-yellow-400 animate-spin" />
+                  <span className="text-xs text-yellow-400 font-medium">Loading...</span>
+                </div>
+              )}
+              {webContainerError && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20">
+                  <AlertCircle className="w-3.5 h-3.5 text-red-400" />
+                  <span className="text-xs text-red-400 font-medium">Error</span>
+                </div>
+              )}
+              {webcontainer && !webContainerLoading && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-xs text-emerald-400 font-medium">{files.length} files ready</span>
+                </div>
+              )}
+            </div>
           </div>
-        )}
+
+          {rateLimitInfo?.isLimited && (
+            <div className="mt-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20 backdrop-blur-sm">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-red-400 font-semibold">API Rate Limit Reached</p>
+                  <p className="text-xs text-red-300/80 mt-1">
+                    Free tier allows 20 requests per day. Retry in {countdown} seconds.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </header>
       
-      <div className="flex-1 overflow-hidden">
-        <div className="h-full grid grid-cols-4 gap-6 p-6">
-          <div className="col-span-1 space-y-6 overflow-auto">
-            <div>
-              <div className="max-h-[75vh] overflow-scroll">
+      <div className="relative z-10 flex-1 overflow-hidden">
+        <div className="h-full grid grid-cols-4 gap-4 p-4">
+          <div className="col-span-1 space-y-4">
+            <div className="h-full flex flex-col bg-white/[0.02] border border-white/[0.08] rounded-2xl overflow-hidden backdrop-blur-sm">
+              <div className="px-4 py-3 border-b border-white/[0.08]">
+                <h2 className="text-sm font-semibold text-white">Build Steps</h2>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto px-2 py-2">
                 <StepsList
                   steps={steps}
                   currentStep={currentStep}
                   onStepClick={setCurrentStep}
                 />
               </div>
-              <div>
-                <div className='flex'>
-                  <br />
-                  {(loading || !templateSet) && <Loader />}
-                  {!(loading || !templateSet) && <div className='flex'>
-                    <textarea value={userPrompt} onChange={(e) => {
-                    setPrompt(e.target.value)
-                  }} className='p-2 w-full'></textarea>
-                  <button onClick={async () => {
-                    if (!userPrompt.trim()) {
-                      alert("Please enter a message");
-                      return;
-                    }
 
-                    const newMessage = {
-                      role: "user" as "user",
-                      content: userPrompt
-                    };
+              <div className="border-t border-white/[0.08] p-3">
+                {(loading || !templateSet) ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader />
+                  </div>
+                ) : (
+                  <div className="relative group">
+                    <div className="absolute -inset-0.5 bg-gradient-to-b from-white/10 to-transparent rounded-xl blur-sm opacity-0 group-focus-within:opacity-100 transition duration-300"></div>
+                    <div className="relative bg-[#0A0A0A] rounded-xl border border-white/[0.08] overflow-hidden group-focus-within:border-white/20">
+                      <textarea
+                        value={userPrompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        placeholder="Ask for changes..."
+                        className="w-full bg-transparent text-white placeholder-zinc-600 px-3 py-2.5 text-sm focus:outline-none resize-none"
+                        rows={3}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            if (userPrompt.trim()) {
+                              document.getElementById('send-button')?.click();
+                            }
+                          }
+                        }}
+                      />
+                      <div className="flex items-center justify-end px-2 pb-2">
+                        <button
+                          id="send-button"
+                          onClick={async () => {
+                            if (!userPrompt.trim()) {
+                              alert("Please enter a message");
+                              return;
+                            }
 
-                    try {
-                      setLoading(true);
-                      const stepsResponse = await axios.post(`${BACKEND_URL}/chat`, {
-                        messages: [...llmMessages, newMessage]
-                      });
-                      setLoading(false);
+                            const newMessage = {
+                              role: "user" as "user",
+                              content: userPrompt
+                            };
 
-                      setLlmMessages(x => [...x, newMessage]);
-                      setLlmMessages(x => [...x, {
-                        role: "assistant",
-                        content: stepsResponse.data.response
-                      }]);
-                      
-                      setSteps(s => [...s, ...parseXml(stepsResponse.data.response).map(x => ({
-                        ...x,
-                        status: "pending" as "pending"
-                      }))]);
+                            try {
+                              setLoading(true);
+                              const stepsResponse = await axios.post(`${BACKEND_URL}/chat`, {
+                                messages: [...llmMessages, newMessage]
+                              });
+                              setLoading(false);
 
-                      setPrompt(""); // Clear the input after successful send
-                    } catch (error) {
-                      setLoading(false);
-                      console.error("Error sending message:", error);
-                      
-                      if (axios.isAxiosError(error)) {
-                        if (error.response?.status === 429) {
-                          const retryAfter = error.response.data?.retryAfter || 60;
-                          setRateLimitInfo({ isLimited: true, retryAfter });
-                          setCountdown(retryAfter);
-                          
-                          // Start countdown
-                          const countdownInterval = setInterval(() => {
-                            setCountdown(prev => {
-                              if (prev <= 1) {
-                                clearInterval(countdownInterval);
-                                setRateLimitInfo(null);
-                                return 0;
+                              setLlmMessages(x => [...x, newMessage]);
+                              setLlmMessages(x => [...x, {
+                                role: "assistant",
+                                content: stepsResponse.data.response
+                              }]);
+                              
+                              setSteps(s => [...s, ...parseXml(stepsResponse.data.response).map(x => ({
+                                ...x,
+                                status: "pending" as "pending"
+                              }))]);
+
+                              setPrompt("");
+                            } catch (error) {
+                              setLoading(false);
+                              console.error("Error sending message:", error);
+                              
+                              if (axios.isAxiosError(error)) {
+                                if (error.response?.status === 429) {
+                                  const retryAfter = error.response.data?.retryAfter || 60;
+                                  setRateLimitInfo({ isLimited: true, retryAfter });
+                                  setCountdown(retryAfter);
+                                  
+                                  const countdownInterval = setInterval(() => {
+                                    setCountdown(prev => {
+                                      if (prev <= 1) {
+                                        clearInterval(countdownInterval);
+                                        setRateLimitInfo(null);
+                                        return 0;
+                                      }
+                                      return prev - 1;
+                                    });
+                                  }, 1000);
+                                } else {
+                                  alert(`Error: ${error.response?.data?.message || error.message}`);
+                                }
+                              } else {
+                                alert("An unexpected error occurred. Please try again.");
                               }
-                              return prev - 1;
-                            });
-                          }, 1000);
-                        } else {
-                          alert(`Error: ${error.response?.data?.message || error.message}`);
-                        }
-                      } else {
-                        alert("An unexpected error occurred. Please try again.");
-                      }
-                    }
-                  }} className='bg-purple-400 px-4 hover:bg-purple-500 disabled:bg-gray-500' disabled={loading || rateLimitInfo?.isLimited}>
-                    {loading ? 'Sending...' : rateLimitInfo?.isLimited ? `Wait ${countdown}s` : 'Send'}
-                  </button>
-                  </div>}
-                </div>
+                            }
+                          }}
+                          disabled={loading || rateLimitInfo?.isLimited}
+                          className="h-8 px-4 rounded-lg bg-white text-black text-xs font-semibold hover:bg-zinc-200 transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                        >
+                          <Send className="w-3 h-3" />
+                          <span>{loading ? 'Sending...' : rateLimitInfo?.isLimited ? `Wait ${countdown}s` : 'Send'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
+
           <div className="col-span-1">
-              <FileExplorer 
-                files={files} 
-                onFileSelect={setSelectedFile}
-              />
+            <div className="h-full bg-white/[0.02] border border-white/[0.08] rounded-2xl overflow-hidden backdrop-blur-sm">
+              <div className="px-4 py-3 border-b border-white/[0.08]">
+                <h2 className="text-sm font-semibold text-white">File Explorer</h2>
+              </div>
+              <div className="overflow-y-auto h-[calc(100%-3rem)]">
+                <FileExplorer 
+                  files={files} 
+                  onFileSelect={setSelectedFile}
+                />
+              </div>
             </div>
-          <div className="col-span-2 bg-gray-900 rounded-lg shadow-lg p-4 h-[calc(100vh-8rem)]">
-            <TabView 
-              activeTab={activeTab} 
-              onTabChange={setActiveTab}
-              onRefreshPreview={() => setPreviewKey(prev => prev + 1)}
-            />
-            <div className="h-[calc(100%-4rem)]">
-              {activeTab === 'code' ? (
-                <CodeEditor file={selectedFile} />
-              ) : (
-                <PreviewFrame key={previewKey} webContainer={webcontainer} files={files} />
-              )}
+          </div>
+
+          <div className="col-span-2">
+            <div className="h-full bg-white/[0.02] border border-white/[0.08] rounded-2xl overflow-hidden backdrop-blur-sm flex flex-col">
+              <TabView 
+                activeTab={activeTab} 
+                onTabChange={setActiveTab}
+                onRefreshPreview={() => setPreviewKey(prev => prev + 1)}
+              />
+              <div className="flex-1 overflow-hidden">
+                {activeTab === 'code' ? (
+                  <CodeEditor file={selectedFile} />
+                ) : (
+                  <PreviewFrame key={previewKey} webContainer={webcontainer} files={files} />
+                )}
+              </div>
             </div>
           </div>
         </div>
